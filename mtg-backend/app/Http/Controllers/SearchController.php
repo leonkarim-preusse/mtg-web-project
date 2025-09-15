@@ -24,7 +24,7 @@ class SearchController extends Controller
         $q = trim((string)($validated['q'] ?? ''));
         $page = (int)($validated['page'] ?? 1);
         $pageSize = (int)($validated['pageSize'] ?? 30);
-        $unique = $request->boolean('unique', true);
+        
 
         $cards = [];
         if ($q !== '') {
@@ -36,9 +36,7 @@ class SearchController extends Controller
                     'orderBy'  => 'name',
                     'dir'      => 'asc',
                 ]);
-                if ($unique) {
-                    $cards = $this->mtg->dedupeByNamePreferImage($cards);
-                }
+                
             } catch (\Throwable $e) {
                 Log::warning('Global search failed (cards)', ['error' => $e->getMessage()]);
                 $cards = [];
@@ -62,7 +60,6 @@ class SearchController extends Controller
             'decks'    => $decks,
             'page'     => $page,
             'pageSize' => $pageSize,
-            'unique'   => $unique,
         ]);
     }
 }

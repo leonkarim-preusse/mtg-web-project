@@ -18,14 +18,6 @@ class CardsController extends Controller
         ]);
 
         $cards = $mtg->searchCards($params);
-
-        // Unique by name (default ON)
-        if ($request->boolean('unique', true)) {
-            if (method_exists($mtg, 'dedupeByNamePreferImage')) {
-                $cards = $mtg->dedupeByNamePreferImage($cards);
-            }
-        }
-
         return response()->json(['cards' => $cards], 200);
     }
 }

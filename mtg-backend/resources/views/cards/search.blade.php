@@ -21,10 +21,7 @@
       <button type="submit">Search</button>
       <button type="button" id="reset-btn" class="button">Reset</button>
       <button type="button" id="toggle-advanced" class="button">Advanced</button>
-      <label class="toggle" style="margin-left:auto;" title="Show only one card per name">
-        <input type="checkbox" id="unique-names" name="unique" value="1" checked>
-        <span>Unique names</span>
-      </label>
+      
     </div>
 
     <div id="advanced-fields" class="advanced" hidden>
@@ -52,20 +49,14 @@
     const results = document.getElementById('results');
     const toggleBtn = document.getElementById('toggle-advanced');
     const advanced = document.getElementById('advanced-fields');
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-    const uniqueToggle = document.getElementById('unique-names');
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
     toggleBtn.addEventListener('click', () => {
       advanced.hidden = !advanced.hidden;
       toggleBtn.textContent = advanced.hidden ? 'Advanced' : 'Hide advanced';
     });
 
-    uniqueToggle.addEventListener('change', () => {
-      if (uniqueToggle.checked) uniqueToggle.name = 'unique';
-      else uniqueToggle.removeAttribute('name'); // omit when OFF
-      page = 1;
-      fetchAndRender();
-    });
+    
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -75,7 +66,6 @@
 
     resetBtn.addEventListener('click', () => {
       form.reset();
-      uniqueToggle.checked = true; uniqueToggle.name = 'unique';
       page = 1;
       advanced.hidden = true;
       toggleBtn.textContent = 'Advanced';
@@ -100,6 +90,26 @@
             <path class="heart-stroke" d="M12 21s-6.716-4.35-9.428-7.06C.86 12.228 1 9.5 3.2 7.8 5.4 6.1 8 7 9.2 8.6L12 11.5l2.8-2.9C16 7 18.6 6.1 20.8 7.8 23 9.5 23.14 12.228 21.428 13.94 18.716 16.65 12 21 12 21z"/>
           </svg>
         </button>
+      `;
+    }
+
+    function addButton(id) {
+      return `
+        <button class="add-btn" data-id="${String(id)}" title="Add to deck" aria-haspopup="true" aria-expanded="false">+</button>
+        <div class="deck-popover" data-for="${String(id)}" hidden>
+          <div class="deck-popover__inner">
+            <div class="row">
+              <label>Existing deck</label>
+              <select class="deck-select"><option value="">Loading…</option></select>
+              <button class="deck-add-existing" data-id="${String(id)}">Add</button>
+            </div>
+            <div class="row">
+              <label>New deck</label>
+              <input type="text" class="deck-new-name" placeholder="Deck name">
+              <button class="deck-create-add" data-id="${String(id)}">Create + Add</button>
+            </div>
+          </div>
+        </div>
       `;
     }
 
@@ -150,10 +160,11 @@
       return `
         <article class="card" data-name="${String(c.name || '')}">
           ${favButton(c.id)}
+          ${addButton(c.id)}
           <div class="card__media">${img}</div>
           <div class="card__body">
-            <h3>${c.name}</h3>
-            <p>${types}</p>
+            <h3 style="color:#fff;">${c.name}</h3>
+            <p style="color:#fff;">${types}</p>
             <p class="muted">${c.manaCost ?? ''} ${c.cmc != null ? '(CMC ' + c.cmc + ')' : ''}</p>
             <p class="muted">${c.rarity ?? ''} ${c.setName ? '• ' + c.setName : (c.set ? '• ' + c.set : '')}</p>
             <p class="muted">${colors}</p>
@@ -210,5 +221,103 @@
         results.innerHTML = `<p class="error">Error: ${String(err)}</p>`;
       }
     }
+
+    // Add-to-deck popover behaviour
+    async function fetchDecks() {
+      const r = await fetch('/api/decks', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      return j.decks || [];
+    }
+
+    function closeAllPopovers() {
+      document.querySelectorAll('.deck-popover').forEach(p => p.hidden = true);
+      document.querySelectorAll('.add-btn[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded','false'));
+      document.querySelectorAll('.card.popover-open').forEach(c => c.classList.remove('popover-open'));
+    }
+
+    document.addEventListener('click', async (e) => {
+      // Open/close popover
+      const addBtn = e.target.closest('.add-btn');
+      if (addBtn) {
+        if (!window.isAuthed) { alert('Please log in to manage decks.'); return; }
+        const id = addBtn.dataset.id;
+        const pop = document.querySelector(`.deck-popover[data-for="${CSS.escape(id)}"]`);
+        const cardEl = addBtn.closest('.card');
+        const sel = pop.querySelector('.deck-select');
+        if (pop.hidden) {
+          closeAllPopovers();
+          addBtn.setAttribute('aria-expanded', 'true');
+          pop.hidden = false;
+          cardEl?.classList.add('popover-open');
+          // load decks
+          try {
+            const decks = await fetchDecks();
+            sel.innerHTML = decks.length ? decks.map(d => `<option value="${d.id}">${d.name}</option>`).join('') : '<option value="">No decks</option>';
+          } catch { sel.innerHTML = '<option value="">Error</option>'; }
+        } else {
+          addBtn.setAttribute('aria-expanded', 'false');
+          pop.hidden = true;
+          cardEl?.classList.remove('popover-open');
+        }
+        return;
+      }
+
+      // Add to existing
+      const addExisting = e.target.closest('.deck-add-existing');
+      if (addExisting) {
+        const id = addExisting.dataset.id;
+        const pop = document.querySelector(`.deck-popover[data-for="${CSS.escape(id)}"]`);
+        const deckId = pop.querySelector('.deck-select')?.value;
+        if (!deckId) return alert('Choose a deck.');
+        try {
+          const r = await fetch(`/api/decks/${encodeURIComponent(deckId)}/add`, {
+            method: 'POST',
+            headers: { 'Accept':'application/json', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With':'XMLHttpRequest' },
+            body: JSON.stringify({ card_id: String(id), qty: 1 }),
+            credentials: 'same-origin',
+          });
+          if (!r.ok) throw new Error('HTTP '+r.status);
+          closeAllPopovers();
+        } catch { alert('Failed to add to deck.'); }
+        return;
+      }
+
+      // Create + add
+      const createAdd = e.target.closest('.deck-create-add');
+      if (createAdd) {
+        const id = createAdd.dataset.id;
+        const pop = document.querySelector(`.deck-popover[data-for="${CSS.escape(id)}"]`);
+        const name = pop.querySelector('.deck-new-name')?.value.trim();
+        if (!name) return alert('Enter a deck name.');
+        try {
+          const r1 = await fetch('/api/decks', {
+            method: 'POST',
+            headers: { 'Accept':'application/json', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With':'XMLHttpRequest' },
+            body: JSON.stringify({ name }),
+            credentials: 'same-origin',
+          });
+          if (!r1.ok) throw new Error('HTTP '+r1.status);
+          const j1 = await r1.json();
+          const deckId = j1.deck?.id;
+          if (!deckId) throw new Error('No deck id');
+
+          const r2 = await fetch(`/api/decks/${encodeURIComponent(deckId)}/add`, {
+            method: 'POST',
+            headers: { 'Accept':'application/json', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With':'XMLHttpRequest' },
+            body: JSON.stringify({ card_id: String(id), qty: 1 }),
+            credentials: 'same-origin',
+          });
+          if (!r2.ok) throw new Error('HTTP '+r2.status);
+          closeAllPopovers();
+        } catch { alert('Failed to create/add.'); }
+        return;
+      }
+
+      // Click outside closes popovers
+      if (!e.target.closest('.deck-popover') && !e.target.closest('.add-btn')) {
+        closeAllPopovers();
+      }
+    });
   </script>
 @endsection

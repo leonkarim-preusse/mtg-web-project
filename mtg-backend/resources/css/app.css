@@ -137,3 +137,32 @@ a { color: inherit; }
   .icon-btn { width: 34px; height: 34px; }
   .logout button:not(.icon-btn) { display: none; } /* keep icon only */
 }
+
+/* Deck cover: clip to banner with focused crop */
+.deck-cover {
+  height: 180px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.deck-cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  /* Focus slightly above center to catch faces and main elements */
+  object-position: 50% 35%;
+}
+
+/* Crop deck card image: top 10%, bottom 45%, left/right 5% */
+.deck-card-cropped {
+  display: block;              /* ensure predictable box */
+  -webkit-clip-path: inset(10% 5% 45% 5%);
+          clip-path: inset(10% 5% 45% 5%);
+}
+
+.card__media img { display: block; width: 100%; height: auto; }
+/* Crop deck card image on /decks* pages: top 10%, bottom 45%, left/right 5% */
+.page-decks .card__media img {
+  -webkit-clip-path: inset(10% 5% 45% 5%);
+          clip-path: inset(10% 5% 45% 5%);
+}

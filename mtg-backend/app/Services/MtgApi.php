@@ -8,6 +8,18 @@ use Illuminate\Support\Facades\Log;
 
 class MtgApi
 {
+    // Returns an art-only image URL when possible (Scryfall art_crop variant)
+    private function pickArtUrlFromImageUrl(?string $imageUrl): ?string
+    {
+        if (!$imageUrl) return null;
+        if (str_starts_with($imageUrl, 'https://api.scryfall.com/cards/')) {
+            return $imageUrl . (str_contains($imageUrl, '?') ? '&' : '?') . 'version=art_crop';
+        }
+        if (preg_match('#/scryfall-cards/(small|normal|large|png|border_crop|art_crop)/#', $imageUrl)) {
+            return preg_replace('#/scryfall-cards/(small|normal|large|png|border_crop|art_crop)/#', '/scryfall-cards/art_crop/', $imageUrl);
+        }
+        return null;
+    }
     public function searchCards(array $params): array
     {
         // Normalize params
@@ -99,14 +111,16 @@ class MtgApi
             }
 
             $data = $res->json('data') ?? [];
-            $mapped = [];
+            $mapped = []; 
             foreach ($data as $d) {
                 // Resolve image
-                $img = null;
+                $img = null; $imgArt = null;
                 if (!empty($d['image_uris']['normal'])) {
                     $img = $d['image_uris']['normal'];
+                    $imgArt = $d['image_uris']['art_crop'] ?? null;
                 } elseif (!empty($d['card_faces'][0]['image_uris']['normal'])) {
                     $img = $d['card_faces'][0]['image_uris']['normal'];
+                    $imgArt = $d['card_faces'][0]['image_uris']['art_crop'] ?? null;
                 }
 
                 // Parse types from type_line
@@ -118,6 +132,7 @@ class MtgApi
                     'id'        => $d['id'] ?? null,
                     'name'      => $d['name'] ?? '',
                     'imageUrl'  => $img,
+                    'imageArtUrl' => $imgArt,
                     'manaCost'  => $d['mana_cost'] ?? null,
                     'cmc'       => $d['cmc'] ?? null,
                     'types'     => $typesArr,
@@ -154,26 +169,22 @@ class MtgApi
     public function getCardById(string $id): ?array
     {
         $key = 'mtg:card:' . $id;
-        return Cache::remember($key, 3600, function () use ($id) {
-            // Try MTG API by id
+        return \Illuminate\Support\Facades\Cache::remember($key, 3600, function () use ($id) {
             try {
                 $base = config('services.mtg.base', 'https://api.magicthegathering.io/v1');
-                $res = Http::retry(2, 300)->timeout(10)->acceptJson()->get("$base/cards/$id");
+                $res = \Illuminate\Support\Facades\Http::retry(2, 300)->timeout(10)->acceptJson()->get("$base/cards/$id");
                 if ($res->ok()) {
                     $c = $res->json('card') ?? null;
                     if (is_array($c)) {
                         $c['id'] = $c['id'] ?? $id;
                         $c['imageUrl'] = $this->pickImageUrl($c);
+                        $c['imageArtUrl'] = $this->pickArtUrlFromImageUrl($c['imageUrl'] ?? null);
                         return $c;
                     }
                 }
-            } catch (\Throwable $e) {
-                Log::warning('MTG getCardById failed', ['id' => $id, 'err' => $e->getMessage()]);
-            }
-
-            // Fallback: Scryfall by id
+            } catch (\Throwable $e) {}
             try {
-                $r = Http::retry(2, 300)->timeout(10)->acceptJson()->get("https://api.scryfall.com/cards/$id");
+                $r = \Illuminate\Support\Facades\Http::retry(2, 300)->timeout(10)->acceptJson()->get("https://api.scryfall.com/cards/$id");
                 if ($r->ok()) {
                     $d = $r->json();
                     if (is_array($d)) {
@@ -198,10 +209,7 @@ class MtgApi
                         ];
                     }
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Scryfall getCardById failed', ['id' => $id, 'err' => $e->getMessage()]);
-            }
-
+            } catch (\Throwable $e) {}
             return null;
         });
     }
@@ -210,30 +218,30 @@ class MtgApi
     {
         $out = [];
         foreach ($ids as $id) {
-            $card = $this->getCardById((string)$id);
-            if ($card) $out[(string)$id] = $card;
+            $c = $this->getCardById((string)$id);
+            if ($c) $out[] = $c;
         }
-        // Keep input order
-        return array_values(array_filter(array_map(fn($id) => $out[$id] ?? null, array_map('strval', $ids))));
+        return $out;
     }
 
-    public function dedupeByNamePreferImage(array $cards): array
+    // Resolve a card ID by its exact name using Scryfall's named endpoint
+    public function resolveIdByExactName(string $name): ?string
     {
-        $map = [];
-        foreach ($cards as $c) {
-            $key = strtolower(trim((string)($c['name'] ?? '')));
-            if ($key === '') continue;
-
-            if (!isset($map[$key])) {
-                $map[$key] = $c;
-                continue;
+        $name = trim($name);
+        if ($name === '') return null;
+        try {
+            $r = Http::retry(2, 300)
+                ->timeout((int) config('services.mtg.timeout', 10))
+                ->acceptJson()
+                ->get('https://api.scryfall.com/cards/named', [ 'exact' => $name ]);
+            if ($r->ok()) {
+                $d = $r->json();
+                $id = (string) ($d['id'] ?? '');
+                return $id !== '' ? $id : null;
             }
-            $hasImgExisting = !empty($map[$key]['imageUrl']);
-            $hasImgNew = !empty($c['imageUrl']);
-            if (!$hasImgExisting && $hasImgNew) {
-                $map[$key] = $c;
-            }
+        } catch (\Throwable $e) {
+            \Log::warning('Scryfall named lookup failed', ['name'=>$name, 'error'=>$e->getMessage()]);
         }
-        return array_values($map);
+        return null;
     }
 }

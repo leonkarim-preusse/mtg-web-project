@@ -12,14 +12,16 @@
       <link rel="stylesheet" href="{{ asset('app.css') }}">
     @endif
   </head>
-  <body>
+  <body class="{{ request()->is('decks*') ? 'page-decks' : '' }}">
     <header class="topbar">
       <div class="topbar__inner container">
         <!-- Left: tabs with image background -->
         <div class="nav-banner">
           <nav class="tabs">
             <form method="GET" action="{{ route('cards.search') }}"><button type="submit">Card Search</button></form>
-            <form method="GET" action="{{ route('decks.index') }}"><button type="submit">Decks</button></form>
+            @auth
+              <a href="{{ route('decks.index') }}" class="button">Decks</a>
+            @endauth
             <form method="GET" action="{{ route('favorites.index') }}"><button type="submit">Favorites</button></form>
           </nav>
         </div>
@@ -31,7 +33,7 @@
           <button type="submit">Search</button>
         </form>
 
-        <!-- Right: logout (icon + text button) -->
+        <!-- Right: logout (icon only) -->
         <div class="logout">
           @auth
           <form method="POST" action="{{ route('logout') }}">
@@ -44,15 +46,8 @@
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
             </button>
-            <button type="submit">Logout</button>
           </form>
           @endauth
-          @guest
-          <div class="auth-links">
-            <form method="GET" action="{{ route('login') }}"><button type="submit">Login</button></form>
-            <form method="GET" action="{{ route('register') }}"><button type="submit">Register</button></form>
-          </div>
-          @endguest
         </div>
       </div>
     </header>

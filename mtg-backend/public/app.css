@@ -90,13 +90,22 @@ button[disabled] { opacity: .6; cursor: not-allowed; }
 }
 .form-card input[type="text"],
 .form-card input[type="number"],
-.form-card input[type="search"] {
+.form-card input[type="search"],
+.form-card input[type="email"],
+.form-card input[type="password"] {
   padding: .6rem .7rem;
   border: 1px solid #ffffff2a;
   border-radius: .45rem;
   background: #0f172a;
   color: #e5e7eb;
+  width: 100%;
 }
+
+.form-card input:focus { outline: 2px solid transparent; border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.25); }
+.form-card .checkbox { display: flex; align-items: center; gap: .5rem; color: #fff; }
+
+.alert { padding: .75rem 1rem; border-radius: .45rem; border: 1px solid #ffffff22; margin: .75rem 0; }
+.alert.error { background: #7f1d1d; color: #fff; border-color: #fecaca33; }
 
 /* Controls row */
 .controls { margin-top: .75rem; display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
@@ -113,14 +122,19 @@ button[disabled] { opacity: .6; cursor: not-allowed; }
   display:flex;
   flex-direction:column;
   height:100%;
-  overflow:hidden;
+  overflow:visible; /* allow popovers to overflow card */
   border: 1px solid #ffffff16;
   border-radius: .6rem;
   background: linear-gradient(180deg, #0f172a, #0b1220);
   box-shadow: 0 8px 18px rgba(0,0,0,.25);
 }
+.card.popover-open { z-index: 20; }
 .card__media img { display: block; width: 100%; height: auto; }
-.card__body { padding: .6rem .7rem; }
+/* Crop deck card image on /decks* pages: top 10%, bottom 45%, left/right 5% */
+.page-decks .card__media img {
+  -webkit-clip-path: inset(10% 5% 45% 5%);
+          clip-path: inset(10% 5% 45% 5%);
+}
 
 /* Heart (bigger, no outline) */
 .fav-btn {
@@ -141,26 +155,41 @@ button[disabled] { opacity: .6; cursor: not-allowed; }
 .fav-btn.is-on .heart-fill,
 .fav-btn[aria-pressed="true"] .heart-fill { fill: #ef4444 !important; }
 
-/* Pager */
-.pager { margin-top:.75rem; display:flex; gap:.5rem; align-items:center; }
-.pager span { color: #fff; opacity: .75; }
-
-/* Toggle switch */
-.toggle { display: inline-flex; align-items: center; gap: .45rem; user-select: none; }
-.toggle input[type="checkbox"] {
-  appearance: none; -webkit-appearance: none; width: 40px; height: 22px;
-  background: #1f2937; border: 1px solid #ffffff33; border-radius: 999px;
-  position: relative; cursor: pointer; outline: none;
+/* Plus button next to heart */
+.add-btn {
+  position: absolute; top: 8px; right: 52px;  /* heart is at right:8px */
+  width: 36px; height: 36px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #10b981; color: #0b1220; border: 0; border-radius: 999px;
+  font-weight: 700; font-size: 18px; line-height: 1;
+  cursor: pointer; z-index: 2;
 }
-.toggle input[type="checkbox"]::after {
-  content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
-  background: #fff; border-radius: 50%; transition: transform .2s ease;
-}
-.toggle input[type="checkbox"]:checked { background: #10b981; border-color: #10b981; }
-.toggle input[type="checkbox"]:checked::after { transform: translateX(18px); }
+.add-btn:hover { filter: brightness(1.05); }
 
-/* Hide duplicates when unique toggle is ON (top search page) */
-.dupe-hidden { display: none !important; }
+/* Deck popover */
+.deck-popover {
+  position: absolute; top: 50px; right: 8px; z-index: 3;
+  background: #0f172a; color: #fff; border: 1px solid #ffffff22; border-radius: .5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35); padding: .5rem; width: 260px;
+}
+.deck-popover { z-index: 1002; } /* above other cards and near topbar (1000) */
+.deck-popover__inner { display: grid; gap: .5rem; }
+.deck-popover .row { display: grid; gap: .35rem; }
+.deck-popover label { font-size: .85rem; opacity: .85; }
+.deck-popover select, .deck-popover input[type="text"] {
+  width: 100%; padding: .4rem .5rem; border-radius: .4rem; border: 1px solid #ffffff22; background: #0b1220; color: #fff;
+}
+.deck-popover button { padding: .35rem .6rem; border-radius: .4rem; border: 1px solid #ffffff22; background:#1f2937; color:#fff; cursor:pointer; }
+.deck-popover button:hover { background:#2b3747; }
+
+/* removed unique-names duplicate-hiding rule */
+
+/* Crop deck card image: top 10%, bottom 45%, left/right 5% */
+.deck-card-cropped {
+  display: block;
+  -webkit-clip-path: inset(10% 5% 45% 5%);
+          clip-path: inset(10% 5% 45% 5%);
+}
 
 @media (max-width: 900px) { .searchbar input[type="search"] { max-width: none; } }
 @media (max-width: 700px) {
