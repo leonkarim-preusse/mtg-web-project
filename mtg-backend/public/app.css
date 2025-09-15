@@ -130,10 +130,13 @@ button[disabled] { opacity: .6; cursor: not-allowed; }
 }
 .card.popover-open { z-index: 20; }
 .card__media img { display: block; width: 100%; height: auto; }
-/* Crop deck card image on /decks* pages: top 10%, bottom 45%, left/right 5% */
+/* Crop deck card image on /decks* pages: top 15%, bottom 45%, left/right 10% */
 .page-decks .card__media img {
-  -webkit-clip-path: inset(10% 5% 45% 5%);
-          clip-path: inset(10% 5% 45% 5%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-clip-path: inset(15% 10% 45% 10%);
+          clip-path: inset(15% 10% 45% 10%);
 }
 
 /* Heart (bigger, no outline) */
@@ -184,11 +187,11 @@ button[disabled] { opacity: .6; cursor: not-allowed; }
 
 /* removed unique-names duplicate-hiding rule */
 
-/* Crop deck card image: top 10%, bottom 45%, left/right 5% */
+/* Crop deck card image: top 15%, bottom 45%, left/right 10% */
 .deck-card-cropped {
   display: block;
-  -webkit-clip-path: inset(10% 5% 45% 5%);
-          clip-path: inset(10% 5% 45% 5%);
+  -webkit-clip-path: inset(15% 10% 45% 10%);
+          clip-path: inset(15% 10% 45% 10%);
 }
 
 @media (max-width: 900px) { .searchbar input[type="search"] { max-width: none; } }
