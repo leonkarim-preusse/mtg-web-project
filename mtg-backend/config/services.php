@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -35,4 +34,9 @@ return [
         ],
     ],
 
+    'mtg' => [
+        'base'              => env('MTG_API_BASE', 'https://api.magicthegathering.io/v1'),
+        'timeout'           => env('MTG_API_TIMEOUT', 10),
+        'fallback_scryfall' => env('SEARCH_FALLBACK_SCRYFALL', true),
+    ],
 ];

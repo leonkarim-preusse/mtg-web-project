@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Favorite extends Model
 {
-    protected $fillable = ['user_id', 'mtg_card_id'];
-    public function user() { return $this->belongsTo(User::class); }
+    protected $fillable = ['user_id', 'card_id'];
+    public $timestamps = false;
 }
