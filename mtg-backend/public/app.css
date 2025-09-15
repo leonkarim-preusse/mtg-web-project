@@ -133,6 +133,22 @@ button[disabled] { opacity: .6; cursor: not-allowed; }
 /* Crop deck card image on /decks* pages: top 15%, bottom 45%, left/right 10% */
 .page-decks .card__media img {
   width: 100%;
+  height: auto;               /* stop height:100% on deck page */
+  object-fit: initial;        /* neutralize cover on deck page */
+  -webkit-clip-path: inset(15% 10% 45% 10%);
+          clip-path: inset(15% 10% 45% 10%);
+}
+
+/* Decks page only: prevent grid/card stretching */
+.page-decks .results-grid { align-items: start; }
+.page-decks .card { height: auto; }
+
+/* Decks page only: shorter media box + hide overflow */
+.page-decks .card__media { aspect-ratio: 4 / 3; overflow: hidden; }
+
+/* Decks page only: image fills media box and keeps your crop */
+.page-decks .card__media img {
+  width: 100%;
   height: 100%;
   object-fit: cover;
   -webkit-clip-path: inset(15% 10% 45% 10%);
