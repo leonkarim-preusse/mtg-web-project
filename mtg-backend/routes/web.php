@@ -11,9 +11,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\CardLookupController;
 use App\Http\Controllers\DeckShareController;
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-})->middleware('auth');
+// Default page: public card search
+Route::get('/', [CardSearchPageController::class, 'show'])->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -23,12 +22,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-    // Placeholder pages (you can replace with controllers later)
-    Route::get('/decks', fn() => view('decks.index'))->name('decks.index');
-    Route::get('/favorites', fn() => view('favorites.index'))->name('favorites.index');
 });
 
 // Card Search UI
@@ -54,6 +48,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/decks/{deck}/export', [DeckShareController::class, 'export'])->name('decks.export');
     Route::post('/decks/{deck}/import', [DeckShareController::class, 'import'])->name('decks.import');
     Route::post('/decks/import-new', [DeckShareController::class, 'importNew'])->name('decks.importNew');
+
+    // Favorites UI
+    Route::get('/favorites', fn () => view('favorites.index'))
+        ->name('favorites.index');
 });
 
 // Decks API (JSON)
@@ -69,3 +67,7 @@ Route::get('/api/cards/resolve', [CardLookupController::class, 'resolve'])->name
 
 // Public share endpoint
 Route::get('/s/{token}', [DeckShareController::class, 'showPublic'])->name('decks.share.show');
+
+// Legal pages (public)
+Route::view('/datenschutz', 'legal.privacy')->name('privacy');
+Route::view('/barrierefreiheit', 'legal.accessibility')->name('accessibility');

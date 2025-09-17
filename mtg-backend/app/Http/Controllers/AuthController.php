@@ -24,7 +24,8 @@ class AuthController extends Controller
         // Attempt login with session guard
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
+            // After login, go to the public card search/home
+            return redirect()->intended(route('home'));
         }
 
         return back()->withErrors([
@@ -54,7 +55,8 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+    // After registration, go to the public card search/home
+    return redirect()->route('home');
     }
 
     public function logout(Request $request)

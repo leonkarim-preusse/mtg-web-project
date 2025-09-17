@@ -9,7 +9,21 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.4; padding-top: var(--topbar-h); }
+.site-footer { position: fixed; left: 0; right: 0; bottom: 0; background: #0b1220; border-top: 1px solid #ffffff22; padding: .35rem 0; }
+body { padding-bottom: 48px; }
 .container { max-width: var(--max); margin: 0 auto; padding: var(--gap); }
+
+/* Accessibility helpers */
+.skip-link { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+.skip-link:focus { left: 8px; top: 8px; width: auto; height: auto; padding: .5rem .75rem; background: #0ea5e9; color: #0b1220; border-radius: .4rem; z-index: 2000; }
+
+/* Improve focus styles globally */
+:focus-visible { outline: 2px solid transparent; box-shadow: 0 0 0 3px rgba(56,189,248,.5); border-radius: .2rem; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
 
 /* Fixed top bar */
 .topbar {
@@ -43,6 +57,7 @@ body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.4; padding-
 
 /* Right-aligned logout */
 .logout { flex: 0 0 auto; }
+.logout { display: flex; gap: .5rem; align-items: center; }
 .logout form { display: flex; gap: .5rem; align-items: center; margin: 0; flex-wrap: nowrap; }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
