@@ -1,14 +1,13 @@
 # MTG Web Project
 
-Laravel 12 + Vite basiertes Projekt zum Suchen von MTG‑Karten und Bauen von Decks. Der Code liegt im Ordner `mtg-backend/` und wird als klassische Laravel‑App mit Vite‑Assets betrieben.
+Laravel 12 + Vite basiertes Projekt zum Suchen von MTG‑Karten und Bauen von MTG-Decks. Der Code liegt im Ordner `mtg-backend/` und wird als klassische Laravel‑App mit Vite‑Assets betrieben.
 
 ## Anforderungen (Linux)
 
 - `PHP >= 8.2` inkl. üblicher Extensions: `openssl`, `pdo`, `mbstring`, `tokenizer`, `xml`, `ctype`, `json`, `fileinfo` (und für SQLite: `pdo_sqlite`, `sqlite3`)
 - `Composer >= 2.6`
-- `Node.js >= 18` und `npm >= 9` (für Vite 7)
+- `Node.js >= 18` und `npm >= 9` (für Vite)
 - `SQLite 3`
-- Optional: `git`
 
 Beispielinstallation (Ubuntu/Debian):
 
@@ -16,26 +15,26 @@ Beispielinstallation (Ubuntu/Debian):
 sudo apt update
 sudo apt install -y php php-cli php-mbstring php-xml php-curl php-sqlite3 php-zip unzip sqlite3 git
 
-# Node.js (empfohlen via nvm, um eine aktuelle Version zu bekommen)
+# Node.js (nvm für aktuelle Versionen)
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 source ~/.bashrc
-nvm install --lts # Node 18+ (LTS) installieren
+nvm install --lts 
 ```
 
 ## Projekt aufsetzen (erstes Setup)
 
 ```bash
-cd "~/home/l/Documents/Uni~/MTG Web Project/mtg-backend"
+cd "~/mtg-backend"
 
 # 1) Abhängigkeiten installieren
 composer install
 npm install
 
-# 2) .env anlegen und App Key setzen
+# 2) .env anlegen und App
 cp .env.example .env
 php artisan key:generate
 
-# 3) Datenbank (SQLite) vorbereiten
+# 3) Datenbank vorbereiten
 mkdir -p database
 test -f database/database.sqlite || touch database/database.sqlite
 
@@ -45,32 +44,32 @@ php artisan migrate
 
 Hinweise:
 - Standardmäßig ist `DB_CONNECTION=sqlite` konfiguriert (`config/database.php`). Für MySQL/PGSQL einfach `.env` anpassen.
-- Absenderadresse für Mails kommt aus `MAIL_FROM_ADDRESS` (siehe `.env`).
+- Mail Adress konfigurierbar: `MAIL_FROM_ADDRESS` (siehe `.env`).
 
 ## Entwicklung starten
 
-Variante A – zwei Terminals (empfohlen für klares Logging):
+Variante A – zwei Terminals:
 
 ```bash
 # Terminal 1 – PHP Server
 cd "/home/l/Documents/Uni/MTG Web Project/mtg-backend"
 php artisan serve
 
-# Terminal 2 – Vite (Assets mit HMR)
+# Terminal 2 – Vite
 cd "/home/l/Documents/Uni/MTG Web Project/mtg-backend"
 npm run dev
 ```
 
-Die App ist danach i. d. R. unter `http://127.0.0.1:8000` erreichbar.
+Die App ist ohne weitere Konfigurationen unter `http://127.0.0.1:8000` erreichbar.
 
-Variante B – alles in einem Prozess (Composer Script):
+Variante B:
 
 ```bash
 cd "/home/l/Documents/Uni/MTG Web Project/mtg-backend"
 composer run dev
 ```
 
-Dieses Skript startet parallel: PHP‑Server, Queue Listener, Log‑Tail (`pail`) und Vite (`npm run dev`).
+Startet parallel: PHP‑Server, Queue Listener, Log‑Tail (`pail`) und Vite (`npm run dev`).
 
 ## Build (Production‑Assets)
 
@@ -113,13 +112,13 @@ php artisan tinker
 ## Troubleshooting
 
 - Node‑Version zu alt: Bitte Node 18+ verwenden (z. B. via `nvm`).
-- Port 8000 belegt: `php artisan serve --port=8001` verwenden.
-- Datei‑/Ordnerrechte: Stellen Sie sicher, dass `storage/` und `bootstrap/cache/` beschreibbar sind.
+- Port 8000 belegt: `php artisan serve --port=8001` (oder anderen Port) verwenden.
+- Datei‑/Ordnerrechte: Schreibrechte für `storage/` und `bootstrap/cache/`
 
 ```bash
 cd "/home/l/Documents/Uni/MTG Web Project/mtg-backend"
 chmod -R 775 storage bootstrap/cache
-# Ggf. Besitz anpassen (USER ersetzen)
+# ownership issue
 chown -R $USER:$USER storage bootstrap/cache
 ```
 
