@@ -11,6 +11,7 @@ class Deck extends Model
 
     protected $fillable = ['owner_id', 'name', 'share_token', 'share_enabled'];
 
+    // Auto-generate share_token when creating
     protected static function boot()
     {
         parent::boot();
@@ -23,6 +24,8 @@ class Deck extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    // Owner relationship
     public function owner() { return $this->belongsTo(User::class, 'owner_id'); }
+    // Cards relationship
     public function cards() { return $this->hasMany(DeckCard::class); }
 }

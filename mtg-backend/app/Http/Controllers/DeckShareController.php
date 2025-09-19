@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class DeckShareController extends Controller
 {
-    // Toggle share on/off and regenerate token if requested
+    // Toggle sharing on/off and optionally regenerate token
     public function update(Request $request, Deck $deck)
     {
         abort_unless($deck->owner_id === Auth::id(), 403);
@@ -29,12 +29,12 @@ class DeckShareController extends Controller
         return response()->json(['ok'=>true, 'share_enabled'=>$deck->share_enabled, 'share_token'=>$deck->share_token]);
     }
 
-    // Export deck list in MTG Arena text format as a simple baseline
+    // Export deck list in simple text format
     public function export(Deck $deck)
     {
         abort_unless($deck->owner_id === Auth::id(), 403);
         $rows = DeckCard::where('deck_id', $deck->id)->orderBy('mtg_card_id')->get(['mtg_card_id','quantity']);
-        // Minimal format: "<qty> <card name>" per line, preceded by deck name
+        // Format: "<qty> <card name>" per line
         $lines = ["// {$deck->name}"];
         $api = app(MtgApi::class);
         $cards = $api->resolveCardsByIds($rows->pluck('mtg_card_id')->all());
@@ -50,7 +50,7 @@ class DeckShareController extends Controller
         ]);
     }
 
-    // Public, read-only view by token
+    // Public read-only deck view by token
     public function showPublic(string $token)
     {
         $deck = Deck::where('share_enabled', true)->where('share_token', $token)->firstOrFail();
@@ -65,7 +65,7 @@ class DeckShareController extends Controller
         return view('decks.share', ['deck'=>$deck, 'items'=>$map]);
     }
 
-    // Import deck lines (MTG Arena-like: "<qty> <card name>")
+    // Import deck lines ("<qty> <card name>")
     public function import(Request $request, Deck $deck)
     {
         abort_unless($deck->owner_id === Auth::id(), 403);
@@ -91,7 +91,7 @@ class DeckShareController extends Controller
         return back()->with('status', "Imported $added cards." . (count($errors) ? ' Errors: '.implode(' | ', $errors) : ''));
     }
 
-    // Import as a new deck. Expects JSON: { name: string, list: string }
+    // Import list as a new deck (JSON)
     public function importNew(Request $request)
     {
         $data = $request->validate([

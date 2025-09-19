@@ -11,18 +11,17 @@ use Illuminate\Support\Facades\Auth;
 
 class DeckController extends Controller
 {
+    // List user's decks with counts and a preview image
     public function index(MtgApi $mtg)
     {
         $decks = Deck::where('owner_id', Auth::id())->orderBy('name')->get();
 
-        // Pre-compute counts and one random image per deck with minimal queries
         $deckCounts = [];
         $deckImages = [];
 
         if ($decks->isNotEmpty()) {
             $deckIds = $decks->pluck('id')->all();
 
-            // Counts per deck
             $counts = DeckCard::selectRaw('deck_id, SUM(quantity) as total')
                 ->whereIn('deck_id', $deckIds)
                 ->groupBy('deck_id')
@@ -31,7 +30,7 @@ class DeckController extends Controller
                 $deckCounts[(string)$c->deck_id] = (int) $c->total;
             }
 
-            // Choose one random mtg_card_id per deck
+            // Pick one random mtg_card_id per deck
             $randomPerDeck = [];
             foreach ($deckIds as $did) {
                 $row = DeckCard::where('deck_id', $did)->inRandomOrder()->limit(1)->value('mtg_card_id');
@@ -52,14 +51,15 @@ class DeckController extends Controller
         return view('decks.index', compact('decks', 'deckCounts', 'deckImages'));
     }
 
+    // Show a deck with resolved card details
     public function show(Deck $deck, MtgApi $mtg)
     {
     abort_unless($deck->owner_id === Auth::id(), 403);
 
     $rows = DeckCard::where('deck_id', $deck->id)->get(['mtg_card_id','quantity']);
     $ids = $rows->pluck('mtg_card_id')->all();
-        $cards = $mtg->resolveCardsByIds($ids); // will add if missing
-        // index by id
+    $cards = $mtg->resolveCardsByIds($ids);
+    // Index by id
         $byId = [];
         foreach ($cards as $c) $byId[(string)$c['id']] = $c;
 

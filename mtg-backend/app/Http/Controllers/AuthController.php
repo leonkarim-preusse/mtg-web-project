@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    // Show login form
     public function showLogin()
     {
         return view('auth.login');
     }
 
+    // Handle login request
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -21,10 +23,8 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Attempt login with session guard
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            // After login, go to the public card search/home
             return redirect()->intended(route('home'));
         }
 
@@ -33,11 +33,13 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
+    // Show registration form
     public function showRegister()
     {
         return view('auth.register');
     }
 
+    // Handle registration
     public function register(Request $request)
     {
         $data = $request->validate([
@@ -55,10 +57,10 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-    // After registration, go to the public card search/home
-    return redirect()->route('home');
+        return redirect()->route('home');
     }
 
+    // Log out user
     public function logout(Request $request)
     {
         Auth::logout();

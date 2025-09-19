@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class CardLookupController extends Controller
 {
     public function __construct(private MtgApi $mtg) {}
-
+    // Resolve cards by comma-separated IDs (JSON)
     public function resolve(Request $request)
     {
         $ids = collect(explode(',', (string)$request->query('ids', '')))

@@ -9,12 +9,14 @@ use Illuminate\Support\Facades\Log;
 
 class FavoriteController extends Controller
 {
+    // List favorite card IDs for current user
     public function index()
     {
         $ids = Favorite::where('user_id', Auth::id())->pluck('card_id')->all();
         return response()->json(['ids' => $ids], 200);
     }
 
+    // Toggle favorite for a card ID
     public function toggle(Request $request)
     {
         $data = $request->validate([

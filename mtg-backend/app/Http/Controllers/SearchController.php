@@ -12,7 +12,7 @@ class SearchController extends Controller
 {
     public function __construct(private MtgApi $mtg) {}
 
-    // Global search: searches cards by name and user's decks by name
+    // Global search across cards and user's decks
     public function global(Request $request)
     {
         $validated = $request->validate([

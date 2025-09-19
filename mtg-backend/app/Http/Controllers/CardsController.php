@@ -8,8 +8,7 @@ use Illuminate\Http\Request;
 class CardsController extends Controller
 {
     public function __construct(private MtgApi $mtg) {}
-
-    // JSON: /api/cards?name=...&colors=R,G&types=Creature&rarity=Rare&page=1&pageSize=30
+    // Search cards API (JSON)
     public function search(Request $request)
     {
         $validated = $request->validate([
@@ -36,7 +35,7 @@ class CardsController extends Controller
 
         $query = array_merge($request->query(), $validated);
 
-        // Map setOrName -> set (code) or setName (full name)
+        // Map setOrName to set or setName
         if (!empty($query['setOrName'])) {
             $val = trim((string)$query['setOrName']);
             if ($this->looksLikeSetCode($val)) {
@@ -51,7 +50,7 @@ class CardsController extends Controller
 
         $cards = $this->mtg->searchCards($query);
 
-        // Map fields commonly needed by a UI
+        // Map common UI fields
         $mapped = array_map(function (array $c) {
             return [
                 'id'        => $c['id'] ?? null,
@@ -72,20 +71,19 @@ class CardsController extends Controller
 
         return response()->json([
             'cards' => $mapped,
-            // Note: magicthegathering.io doesn’t return a total count in this endpoint.
+            // No total count provided by upstream
             'page' => (int) ($request->query('page', 1)),
         ]);
     }
-
-    // Blade page: simple form + results container; no auth required
+    // Render search page (Blade)
     public function page()
     {
         return view('cards.search');
     }
 
+    // Heuristic: detect set code shape
     private function looksLikeSetCode(string $v): bool
     {
-        // Typical set code is 2–5 alphanumerics, no spaces (e.g., M10, MH2, J21)
         return (bool) preg_match('/^[A-Za-z0-9]{2,5}$/', trim($v));
     }
 }

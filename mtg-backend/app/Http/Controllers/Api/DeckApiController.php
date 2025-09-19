@@ -11,12 +11,14 @@ use Illuminate\Support\Facades\Auth;
 
 class DeckApiController extends Controller
 {
+    // List user's decks (JSON)
     public function index()
     {
     $decks = Deck::query()->where('owner_id', Auth::id())->orderBy('name')->get(['id','name']);
         return response()->json(['decks' => $decks]);
     }
 
+    // Create a new deck
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -28,6 +30,7 @@ class DeckApiController extends Controller
         return response()->json(['deck' => ['id' => $deck->id, 'name' => $deck->name]], 201);
     }
 
+    // Add or increment a card in a deck
     public function add(Request $request, Deck $deck)
     {
     abort_unless($deck->owner_id === Auth::id(), 403);
@@ -57,6 +60,7 @@ class DeckApiController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // Remove or decrement a card from a deck
     public function remove(Request $request, Deck $deck)
     {
     abort_unless($deck->owner_id === Auth::id(), 403);
